@@ -11,7 +11,7 @@ SRC_NET  = "10.0.0.0/24"
 AB_NET   = "10.1.0.0/24"
 AC_NET   = "10.3.0.0/24"
 BC_NET   = "10.2.0.0/24"
-LTU_NET  = "10.4.0.0/24"
+LTU_NET  = "10.5.0.0/24"
 WIFI_NET = "10.100.0.0/24"
 
 # These get set based on whether this software is running at Pole A or Pole C
@@ -20,8 +20,11 @@ PATH_OPTION_2 = "" # Two hop
 
 
 def initialize(mode):
+    global PATH_OPTION_1
+    global PATH_OPTION_2
+
     ipr = IPRoute()
-    
+
     if(mode == 0):
         # Init on Pole A Router
         PATH_OPTION_1 = "10.3.0.4"
@@ -48,7 +51,7 @@ def initialize(mode):
 
         # Special case for non-split routing
         if (percent == 0 or percent == 100):
-            routeGW = PATH_OPTION_1 if args.percent == 0 else PATH_OPTION_2
+            routeGW = PATH_OPTION_1 if percent == 0 else PATH_OPTION_2
             ipr.route("add", dst=SRC_NET, gateway=routeGW)
 
     ipr.close()
@@ -65,10 +68,10 @@ def delRoute(dstNet):
 def chgRoute(dstNET, weightLong):
     with IPRoute() as ipr:
         ipr.route(
-            "change",
+            "add",
             dst=dstNET,
             multipath=[
-                {"gateway": PATH_OPTION_1, "hops": 100-(weightLong+1)}, # Hop = Weight + 1 ;; Weight = Hop - 1
+                {"gateway": PATH_OPTION_1, "hops": (100-(weightLong+1))}, # Hop = Weight + 1 ;; Weight = Hop - 1
                 {"gateway": PATH_OPTION_2, "hops": (weightLong+1)}
             ]
         )
@@ -98,13 +101,12 @@ if __name__ == '__main__':
                         help="Set the percentage of traffic taking the longer route")
 
     args = parser.parse_args()
-    
+
     percent = args.percent
     router = args.router
-    delete = args.delete
 
     # Clean up mode
-    if(delete):
+    if(args.delete):
         delRoute(LTU_NET)
         delRoute(WIFI_NET)
         delRoute(SRC_NET)
@@ -118,7 +120,7 @@ if __name__ == '__main__':
     # Early exit if traffic is not split
     if(percent == 0 or percent == 100):
         sys.exit(0)
-    
+
     # Multipath Routing
     if(router == 'A'):
         chgRoute(LTU_NET, percent)
