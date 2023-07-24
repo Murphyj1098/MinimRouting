@@ -71,8 +71,10 @@ def chgRoute(dstNET, weightLong):
             "add",
             dst=dstNET,
             multipath=[
-                {"gateway": PATH_OPTION_1, "hops": ((100-weightLong)-1)}, # Hop = Weight - 1
-                {"gateway": PATH_OPTION_2, "hops": (weightLong-1)}
+                # Dividing and rounding weight gives less fine control but allows
+                # multiple paths to be taken sooner (see multipath selection algo)
+                {"gateway": PATH_OPTION_1, "hops": round(((100-weightLong)-1)/10)}, # Hop = Weight - 1
+                {"gateway": PATH_OPTION_2, "hops": round((weightLong-1)/10)}
             ]
         )
 
