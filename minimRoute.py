@@ -73,8 +73,8 @@ def chgRoute(dstNET, weightLong):
             multipath=[
                 # Dividing and rounding weight gives less fine control but allows
                 # multiple paths to be taken sooner (see multipath selection algo)
-                {"gateway": PATH_OPTION_1, "hops": round(((100-weightLong)-1)/10)}, # Hop = Weight - 1
-                {"gateway": PATH_OPTION_2, "hops": round((weightLong-1)/10)}
+                {"gateway": PATH_OPTION_1, "hops": round(((100-weightLong)/10))-1}, # Hop = Weight - 1
+                {"gateway": PATH_OPTION_2, "hops": round((weightLong/10)-1)}
             ]
         )
 
@@ -97,10 +97,10 @@ if __name__ == '__main__':
                         required=True)
 
     parser.add_argument('-p', '--percent',
-                        choices=range(0,101,1),
+                        choices=range(0,101,10),
                         default=0, # Default to all traffic on short route
                         type=int,
-                        help="Set the percentage of traffic taking the longer route")
+                        help="Set the percentage of traffic taking the longer route (10%% intervals)")
 
     args = parser.parse_args()
 
@@ -109,9 +109,11 @@ if __name__ == '__main__':
 
     # Clean up mode
     if(args.delete):
-        delRoute(LTU_NET)
-        delRoute(WIFI_NET)
-        delRoute(SRC_NET)
+        if(router == 'A'):
+            delRoute(LTU_NET)
+            delRoute(WIFI_NET)
+        else: # router == 'C'
+            delRoute(SRC_NET)
         sys.exit(0)
 
     if(router == 'A'):
